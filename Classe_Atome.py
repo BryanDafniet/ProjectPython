@@ -19,8 +19,8 @@ class Atom(Residus):
 		Atom.Z = coord_Z
 	def show():
 		Residus.show()
-		print ("Type d'atome :", Atom.name, "\n Coordonnée X :",
-		 Atom.X, "\n Coordonnée Y :", Atom.Y, "\n Coordonnée Z :", Atom.Z)
+		print ("Type d'atome :", Atom.name, "\nCoordonnée X :",
+		 Atom.X, "\nCoordonnée Y :", Atom.Y, "\nCoordonnée Z :", Atom.Z)
 	show = staticmethod(show)	
 # test = Atom()
 # print (test.nameAA)
