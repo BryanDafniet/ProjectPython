@@ -7,22 +7,25 @@ class Residus(object):
 		self.number = n
 	def show():
 		print ("Nom Residus:", Residus.nameAA, "\n")
-	show = staticmethod(show)
+	
 
-class Atom(Residus):
-	'''Définition des différentes caractéristiques de l'atome'''
-	def __init__(self, atom_name = "CA", coord_X = 0.1, coord_Y = 0, coord_Z = 0.3):
-		Residus.__init__(self)
-		Atom.name = atom_name
-		Atom.X = coord_X
-		Atom.Y = coord_Y
-		Atom.Z = coord_Z
-	def show():
-		Residus.show()
-		print ("Type d'atome :", Atom.name, "\nCoordonnée X :",
-		 Atom.X, "\nCoordonnée Y :", Atom.Y, "\nCoordonnée Z :", Atom.Z)
-	show = staticmethod(show)	
+	class Atom():
+		'''Définition des différentes caractéristiques de l'atome'''
+		def __init__(self, atom_name = "CA", coord_X = 0.1, coord_Y = 0, coord_Z = 0.3):
+			Residus.__init__(self)
+			self.name = atom_name
+			self.X = coord_X
+			self.Y = coord_Y
+			self.Z = coord_Z
+		def show(self):
+			Residus.show()
+			print ("Type d'atome :", self.name, "\nCoordonnée X :",
+			 self.X, "\nCoordonnée Y :", self.Y, "\nCoordonnée Z :", self.Z)
+			
 # test = Atom()
 # print (test.nameAA)
-c1 = Atom()
+c1 = Residus.Atom(atom_name = "TEST")
 c1.show()
+
+class distAtom():
+	Residus
