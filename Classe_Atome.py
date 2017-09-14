@@ -41,31 +41,32 @@ class Lecture_pdb:
 			res_id = 0
 			i = -1
 			for line in src :
-				if line[0:6].strip() == "ATOM" :
-					if res_id != int(line[22:26].strip()):
+				if line[0:6].strip() in ("ATOM","TER") :
+					if res_id != int(line[22:26].strip()) or line[0:6].strip() == "TER" :
 						if 'resid_name' in locals() and len(list_atom) == 4:
+							print (list_atom)
 							self.tab_res.append(Residus(resid_name,resid_num,list_atom))
 						list_atom = {}
 						j = 0
 						i += 1
 						res_id = int(line[22:26].strip())
-						if (line[12:16].strip() in ("C", "H", "N", "O") and
-							line[16:17] in (" ","A")): #Prise en compte uniquement de la position alternative A
-							list_atom[j] = ([line[12:16].strip(),
+					if (line[12:16].strip() in ("C", "H", "N", "O") and
+						line[16:17] in (" ","A")): #Prise en compte uniquement de la position alternative A
+						list_atom[j] = ([line[12:16].strip(),
 										float(line[30:38].strip()),
 										float(line[38:46].strip()),
 										float(line[46:54].strip())])
-							j += 1
-							resid_name =line[17:20]
-							resid_num = res_id
-							print (list_atom)
-		# for i in range((len(self.tab_res))):
-		# 	print(self.tab_res[i].tab_atom[0].atom_name)
+						j += 1
+						resid_name =line[17:20]
+						resid_num = res_id
 
+	def extract_tab(self):
+		return self.tab_res
 
 class Check_and_prepare_pdb(object):
 	""" Cette classe permet de valider la ligne de commande entrée.
 	Ainsi que de confirmer la présence et ajouter les hydrogènes au fichier pdb.
+	Enfin il initialise la lecture du fichier.
 	"""
 	def __init__(self,pdb_file):
 
@@ -80,7 +81,8 @@ class Check_and_prepare_pdb(object):
 		os.system("./reduce.3.23.130521 " + self.file_name + " >"
 				  + self.new_file)#Ajout Hydrogènes
 
-		Lecture_pdb(self.new_file)
+	def lecture(self):
+		return Lecture_pdb(self.new_file).extract_tab()
 
 
 
@@ -120,7 +122,15 @@ class Check_and_prepare_pdb(object):
 # prog principal #
 ##################
 
-x=Check_and_prepare_pdb(sys.argv[1])
+x=Check_and_prepare_pdb(sys.argv[1]).lecture()
+for i in range(len(x)):
+	print(x[i].residu_name)
+	for j in range(4):
+			 	print(x[i].tab_atom[j].atom_name,x[i].tab_atom[j].X,x[i].tab_atom[j].Y,x[i].tab_atom[j].Z)
+
+# test=Lecture_pdb("2am9_H.pdb").extract_tab()
+# print(test[1].residu_name)
+
 # if len(sys.argv) != 2:
 # 	print_usage_and_quit()
 
