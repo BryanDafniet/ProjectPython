@@ -42,26 +42,32 @@ class Lecture_pdb:
 			i = -1
 			for line in src :
 				if line[0:6].strip() in ("ATOM","TER") :
-					if res_id != int(line[22:26].strip()) or line[0:6].strip() == "TER" :
+					if (res_id != int(line[22:26].strip()) or
+					 	line[0:6].strip() == "TER") :
 						if 'resid_name' in locals() and len(list_atom) == 4:
 							print (list_atom)
-							self.tab_res.append(Residus(resid_name,resid_num,list_atom))
+							self.tab_res.append(
+										Residus(resid_name,resid_num,list_atom))
 						list_atom = {}
 						j = 0
 						i += 1
 						res_id = int(line[22:26].strip())
 					if (line[12:16].strip() in ("C", "H", "N", "O") and
-						line[16:17] in (" ","A")): #Prise en compte uniquement de la position alternative A
+						line[16:17] in (" ","A")): #Prise en compte uniquement
+												   #de la position alternative A
 						list_atom[j] = ([line[12:16].strip(),
 										float(line[30:38].strip()),
 										float(line[38:46].strip()),
 										float(line[46:54].strip())])
 						j += 1
-						resid_name =line[17:20]
+						resid_name = line[17:20]
 						resid_num = res_id
 
 	def extract_tab(self):
+
 		return self.tab_res
+
+
 
 class Check_and_prepare_pdb(object):
 	""" Cette classe permet de valider la ligne de commande entrée.
@@ -82,29 +88,12 @@ class Check_and_prepare_pdb(object):
 				  + self.new_file)#Ajout Hydrogènes
 
 	def lecture(self):
+
 		return Lecture_pdb(self.new_file).extract_tab()
-
-
-
-
-
-
-
 
 ######################
 # Création fonctions #
 ######################
-
-# def extract_chain(file_src,id_chain,file_dest):
-# 	with open(file_src,'r') as src:
-# 		chain=[]
-# 		for line in src:
-# 			if	line[21:22].strip() == id_chain and ( line[0:6].strip() ==  "ATOM" or line[0:6].strip() == "TER" or line[0:6].strip() == "HETATM"):
-# 				chain.append(line)
-# 	if chain==[] :
-# 		#os.remove(file_dest)
-# 		sys.exit("La chaine "+id_chain+" n'est pas dans le fichier "+file_src)
-# 	return chain
 
 # def write_pdb_chain(liste_chain,file_dest,count):
 # 	if count == 0 :
@@ -117,6 +106,40 @@ class Check_and_prepare_pdb(object):
 # 				dest.write(liste_chain[i])
 
 
+class dist_energy(Residus):
+	def __init__()
+	def distAtom(self, resid_name, tabAtom):
+		for i in range(0,len(Atoms)-1): #i = iterateur nombre residus
+			for j in range(i+1,len(Atoms)): # j = iterateur nombre residus à comparer
+				dist_OH = math.sqrt(((Atoms[j].tabAtom[0].X)- #O = 0 H = 1
+				(Atoms[i].tabAtom[1].X))**2 + ((Atoms[j].tabAtom[0].Y)-
+				(Atoms[i].tabAtom[1].Y))**2 + ((Atoms[j].tabAtom[0].Z)-
+				(Atoms[i].tabAtom[1].Z))**2)
+				if dist_OH <= 3.5 and (Atoms[i] and Atoms[j] != "PRO"):
+					dist_ON = math.sqrt(((Atoms[j].tabAtom[0].X)- #O = 0 N = 2
+					(Atoms[i].tabAtom[2].X))**2 + ((Atoms[j].tabAtom[0].Y)-
+					(Atoms[i].tabAtom[2].Y))**2 + ((Atoms[j].tabAtom[0].Z)-
+					(Atoms[i].tabAtom[2].Z))**2)
+
+					dist_CH = math.sqrt(((Atoms[j].tabAtom[3].X)- #C = 3 H = 1
+					(Atoms[i].tabAtom[1].X))**2 + ((Atoms[j].tabAtom[3].Y)-
+					(Atoms[i].tabAtom[1].Y))**2 + ((Atoms[j].tabAtom[3].Z)-
+					(Atoms[i].tabAtom[1].Z))**2)
+
+					dist_CN = math.sqrt(((Atoms[j].tabAtom[3].X)- #C = 3 N = 2
+					(Atoms[i].tabAtom[2].X))**2 + ((Atoms[j].tabAtom[3].Y)-
+					(Atoms[i].tabAtom[2].Y))**2 +	((Atoms[j].tabAtom[3].Z)-
+					(Atoms[i].tabAtom[2].Z))**2)
+					return Atoms[i],Atoms[j],dist_OH, dist_CN,dist_CH,dist_ON
+				else:
+					break
+
+	def	energie(self,Res_1,Res_2,dist_OH,dist_CN,dist_CH,dist_ON):
+		energie = 0.084*((1/dist_ON)+(1/dist_CH)-(1/dist_OH)-1/dist_CN)*332
+		if energie <= -0.5:
+			print ("Il y'a un H-bond entre {} et {}".format(Res_1,Res_2))
+		else:
+			print ("Pas de H-bond entre {} et {}".format(Res_1, Res2))
 
 ##################
 # prog principal #
