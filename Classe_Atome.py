@@ -15,11 +15,12 @@ import math
 
 
 class Residus(object):
-    def __init__(self, resid_name, resid_num, list_atom):
+    def __init__(self, resid_name, resid_num, list_atom, struct="c"):
         '''Description '''
         self.residu_name = resid_name
         self.num = resid_num
         self.tab_atom = []
+        self.struct = struct
         for i in range(len(list_atom)):
             self.tab_atom.append(Atoms(list_atom[i][0], list_atom[i][1],
                                        list_atom[i][2], list_atom[i][3]))
@@ -49,7 +50,7 @@ class Lecture_pdb:
                 if line[0:6].strip() in ("ATOM", "TER"):
                     if(res_id != int(line[22:26].strip()) or
                        line[0:6].strip() == "TER"):
-                        if 'resid_name' in locals() and len(list_atom) == 4:
+                        if 'resid_name' in locals():
                             self.tab_res.append(
                                         Residus(resid_name,
                                                 resid_num,
@@ -59,8 +60,10 @@ class Lecture_pdb:
                         i += 1
                         res_id = int(line[22:26].strip())
                     # Prise en compte uniquement de la position alternative A
+                    # et de la chaine A
                     if(line[12:16].strip() in ("C", "H", "N", "O") and
-                       line[16:17] in (" ", "A")):
+                       line[16:17] in (" ", "A") and
+                       line[21:22] == "A"):
                         list_atom[j] = ([line[12:16].strip(),
                                         float(line[30:38].strip()),
                                         float(line[38:46].strip()),
@@ -101,6 +104,7 @@ class Check_and_prepare_pdb(object):
 ######################
 # Création fonctions #
 ######################
+
 def translate_code(code_3_lettre):
     d = {'CYS': 'C', 'ASP': 'D', 'SER': 'S', 'GLN': 'Q', 'LYS': 'K',
          'ILE': 'I', 'PRO': 'P', 'THR': 'T', 'PHE': 'F', 'ASN': 'N',
@@ -116,27 +120,28 @@ def calcule_distance(list_res):
     # j = iterateur nombre residus à comparer
     for i in range(len(list_res) - 1):
         for j in range(i + 1, len(list_res)):
-            dist_OH = (list_res[j].tab_atom[3].
-                       dist_atome(list_res[i].tab_atom[2]))
-            if dist_OH <= 3.5:
-                dist_ON = (list_res[j].tab_atom[0].
+            if len(list_res[j].tab_atom) == 4 :
+                dist_OH = (list_res[j].tab_atom[3].
                            dist_atome(list_res[i].tab_atom[2]))
+                if dist_OH <= 3.5:
+                    dist_ON = (list_res[j].tab_atom[0].
+                               dist_atome(list_res[i].tab_atom[2]))
 
-                dist_CH = (list_res[j].tab_atom[3].
-                           dist_atome(list_res[i].tab_atom[1]))
+                    dist_CH = (list_res[j].tab_atom[3].
+                               dist_atome(list_res[i].tab_atom[1]))
 
-                dist_CN = (list_res[j].tab_atom[0].
-                           dist_atome(list_res[i].tab_atom[1]))
-                dico_dist = {}
-                dico_dist['res_num1'] = list_res[i].num
-                dico_dist['res_num2'] = list_res[j].num
-                dico_dist['dist_OH'] = dist_OH
-                dico_dist['dist_CN'] = dist_CN
-                dico_dist['dist_CH'] = dist_CH
-                dico_dist['dist_ON'] = dist_ON
-                dico_dist['res_name1'] = list_res[i].residu_name
-                dico_dist['res_name2'] = list_res[j].residu_name
-                list_distance.append(dico_dist)
+                    dist_CN = (list_res[j].tab_atom[0].
+                               dist_atome(list_res[i].tab_atom[1]))
+                    dico_dist = {}
+                    dico_dist['res_num1'] = list_res[i].num
+                    dico_dist['res_num2'] = list_res[j].num
+                    dico_dist['dist_OH'] = dist_OH
+                    dico_dist['dist_CN'] = dist_CN
+                    dico_dist['dist_CH'] = dist_CH
+                    dico_dist['dist_ON'] = dist_ON
+                    dico_dist['res_name1'] = list_res[i].residu_name
+                    dico_dist['res_name2'] = list_res[j].residu_name
+                    list_distance.append(dico_dist)
     return list_distance
 
 
@@ -152,31 +157,35 @@ def energie(list_distance):
     return list_hbond
 
 
-def helix(list_hbond):
-    list_helix=[]
-    for i in range(len(list_hbond)):  # parcours de la liste
+def find_helix(list_hbond):
+    list_helix = []
+    i = 0
+    while i < len(list_hbond):  # parcours de la liste
+        k = 0
         for j in (3,4,5):  # helix 3, 4 ou 5
             if list_hbond[i]["res_num1"] == list_hbond[i]["res_num2"] - j:
                 k= i+1
-                print("test",i)
-                while (list_hbond[k]["res_num1"] <
-                       list_hbond[i]["res_num1"] + 2):
+                while(k < len(list_hbond) and
+                       list_hbond[k]["res_num1"] <
+                      (list_hbond[i]["res_num1"] + 2)):
+
                     if ((list_hbond[k]["res_num1"] ==
                         list_hbond[i]["res_num1"] + 1) and
                         (list_hbond[k]["res_num1"] ==
                          list_hbond[k]["res_num2"] - j)):
-                        for l in (i,k):
-                            dico_helix = {}
-                            dico_helix['res_num'] = list_hbond[l]["res_num1"]
-                            dico_helix['res_name'] = list_hbond[l]["res_name1"]
-                            dico_helix["turn"] = j
-                            list_helix.append(dico_helix)
-
+                        dico_helix = {}
+                        dico_helix['res_start'] = list_hbond[i]["res_num1"]
+                        dico_helix['res_end'] = list_hbond[k]["res_num2"]
+                        dico_helix["turn"] = j
+                        list_helix.append(dico_helix)
+                        while(list_hbond[i]["res_num1"] <
+                              list_hbond[k]["res_num2"]):
+                            i += 1
                     k += 1
-                    i = k
+        i += 1
+    return list_helix
 
-                print("ta_maman",i)
-
+# def return_helix(list_residu,list_helix):
 
 
 
@@ -187,9 +196,76 @@ def helix(list_hbond):
 list_atoms = Check_and_prepare_pdb(sys.argv[1]).lecture()
 list_dist = calcule_distance(list_atoms)
 list_hbond = energie(list_dist)
-print(len(list_dist))
-print(list_hbond[1])
-helix(list_hbond)
+
+test=find_helix(list_hbond)
+
+for i in test:
+    print (i)
+print(len(test))
+nb_hel=0
+for sale_tepu in test:
+    for w in range(sale_tepu["res_start"],sale_tepu["res_end"]):
+        for residu in list_atoms:
+            if residu.num == w:
+                nb_hel +=1
+                residu.struct = "h"
+                print(residu.residu_name,residu.num,residu.struct)
+print(nb_hel)
+
+with open("structure_test.txt",'w') as dest:
+    for res in list_atoms:
+        dest.write(str(res.num))
+        dest.write(" ")
+        dest.write(res.residu_name)
+        dest.write(" ")
+        dest.write(res.struct)
+        dest.write(" ")
+        dest.write("\n")
+
+# list_test = []
+# dico_test={}
+# dico_test["res_name1"] = "TA"
+# dico_test["res_name2"] = "MERE"
+# dico_test["res_num1"] = 1
+# dico_test["res_num2"] = 2
+# list_test.append(dico_test)
+
+# dico_test={}
+# dico_test["res_name1"] = "TA"
+# dico_test["res_name2"] = "SALE"
+# dico_test["res_num1"] = 1
+# dico_test["res_num2"] = 4
+# list_test.append(dico_test)
+
+# dico_test={}
+# dico_test["res_name1"] = "MERE"
+# dico_test["res_name2"] = "MANGER"
+# dico_test["res_num1"] = 2
+# dico_test["res_num2"] = 3
+# list_test.append(dico_test)
+
+# dico_test={}
+# dico_test["res_name1"] = "TA"
+# dico_test["res_name2"] = "MERE"
+# dico_test["res_num1"] = 2
+# dico_test["res_num2"] = 5
+# list_test.append(dico_test)
+
+# dico_test={}
+# dico_test["res_name1"] = "TA"
+# dico_test["res_name2"] = "MERE"
+# dico_test["res_num1"] = 3
+# dico_test["res_num2"] = 45
+
+# list_test.append(dico_test)
+
+# print(list_test)
+# TEST = helix(list_test)
+# for i in TEST:
+#     print(i)
+# print(len(list_dist))
+# print(list_hbond[1])
+
 # for i in range(len(x)):
 #     print(x[i].residu_name, x[i].num)
 #     for j in range(4):
